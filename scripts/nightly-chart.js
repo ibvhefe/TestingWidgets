@@ -32,19 +32,25 @@ VSS.require([
                     .then(response => response.json())
                     .then(data => {
                         console.log(data);
-                        data.value.forEach(build => {
-                            var testUrl = `https://dev.azure.com/${organization}/${projectName}/_apis/test/runs?buildIds=${build.id}&api-version=7.1`;
-                            fetch(testUrl, {
-                                method: 'GET',
-                                headers: {
-                                    'Authorization': 'Bearer ' + token,
-                                    'Content-Type': 'application/json'
-                                }
-                            })
-                            .then(response => response.json())
-                            .then(testData => console.log(testData))
-                            .catch((error) => console.error('Error:', error));
-                        });
+                        // Extract the build IDs and join them with a comma
+                        var buildIds = data.value.map(build => build.id).join(',');
+                        var testUrl = `https://dev.azure.com/${organization}/${projectName}/_apis/test/runs?buildIds=${buildIds}&api-version=7.1`;
+                        fetch(testUrl, {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': 'Bearer ' + token,
+                                'Content-Type': 'application/json'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(testData => {
+                            console.log(testData);
+                            // Log the passed and total test count for each test data
+                            testData.value.forEach(test => {
+                                console.log(`Passed: ${test.passedTests}, Total: ${test.totalTests}`);
+                            });
+                        })
+                        .catch((error) => console.error('Error:', error));
                     })
                     .catch((error) => console.error('Error:', error));
                 });
@@ -67,11 +73,6 @@ VSS.require([
                             "name": "Failed",
                             "data": [1,1,1,1,0,0,0],
                             "color": "#FF0000"
-                        },
-                        {
-                            "name": "Other",
-                            "data": [1,1,1,1,1,0,0],
-                            "color": "#909090"
                         }
                     ],
                     "xAxis": {
