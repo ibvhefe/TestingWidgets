@@ -20,39 +20,17 @@ VSS.require([
                     var definitionId = 17;
                     var branchFilter = "refs/heads/main";
                     var organization = VSS.getWebContext().account.name;
-                    var url = `https://dev.azure.com/${organization}/${projectName}/_apis/build/builds?definitions=${definitionId}&branchName=${branchFilter}&api-version=7.1`;
-
-                    fetch(url, {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': 'Bearer ' + token,
-                            'Content-Type': 'application/json'
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log(data);
-                        // Extract the build IDs and join them with a comma
-                        var buildIds = data.value.map(build => build.id).join(',');
-                        var testUrl = `https://dev.azure.com/${organization}/${projectName}/_apis/test/runs?buildIds=${buildIds}&api-version=7.1`;
-                        fetch(testUrl, {
-                            method: 'GET',
-                            headers: {
-                                'Authorization': 'Bearer ' + token,
-                                'Content-Type': 'application/json'
-                            }
-                        })
-                        .then(response => response.json())
-                        .then(testData => {
-                            console.log(testData);
-                            // Log the passed and total test count for each test data
-                            testData.value.forEach(test => {
-                                console.log(`Passed: ${test.passedTests}, Total: ${test.totalTests}`);
-                            });
-                        })
-                        .catch((error) => console.error('Error:', error));
-                    })
-                    .catch((error) => console.error('Error:', error));
+                    fetchBuildData(token, projectName, definitionId, branchFilter, organization)
+                .then(data => {
+                    console.log(data);
+                    var buildIds = data.value.map(build => build.id).join(',');
+                    return fetchTestData(token, projectName, buildIds, organization);
+                })
+                .then(testData => {
+                    console.log(testData);
+                    testData.value.forEach(test => {
+                        console.log(`Passed: ${test.passedTests}, Total: ${test.totalTests}`);
+                    });
                 });
 
                 var $container = $('#Chart-Container');
@@ -103,3 +81,27 @@ VSS.require([
         });
 VSS.notifyLoadSucceeded();
 });
+
+function fetchBuildData(token, projectName, definitionId, branchFilter, organization) {
+    var url = `https://dev.azure.com/${organization}/${projectName}/_apis/build/builds?definitions=${definitionId}&branchName=${branchFilter}&api-version=7.1`;
+
+    return fetch(url, {
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+        }
+    }).then(response => response.json());
+}
+
+function fetchTestData(token, projectName, buildIds, organization) {
+    var testUrl = `https://dev.azure.com/${organization}/${projectName}/_apis/test/runs?buildIds=${buildIds}&api-version=7.1`;
+
+    return fetch(testUrl, {
+        method: 'GET',
+        headers: {
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json'
+        }
+    }).then(response => response.json());
+}
