@@ -11,7 +11,11 @@ VSS.require([
         WidgetHelpers.IncludeWidgetStyles();
         VSS.register("nightly-chart", function () { 
             return{
-                load:function(){
+                load:function(widgetSettings){
+                    console.log(widgetSettings);
+                    var selectedBranch = widgetSettings.customSettings.data.branch;
+                    console.log(selectedBranch);
+
                     return Services.ChartsService.getService()
                     .then(function(chartService) {
                         VSS.getAccessToken()
@@ -93,7 +97,7 @@ function getChartOptions(testResults) {
     var passedData = testResults.map(result => result.passedTests);
     var failedData = testResults.map(result => result.failedTests);
 
-    
+
 
     var chartOptions ={ 
         "hostOptions": { 

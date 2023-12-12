@@ -10,6 +10,25 @@
     
             VSS.require("TFS/Dashboards/WidgetHelpers", function (WidgetHelpers) {
                 VSS.register("nightly-chart.Configuration", function () {   
+                    VSS.getAccessToken()
+                        .then(function(tokenObject) {
+                            var token = tokenObject.token;
+                            var projectName = VSS.getWebContext().project.name;
+                            var organization = VSS.getWebContext().account.name;
+                            var url = `https://dev.azure.com/${organization}/${projectName}/_apis/pipelines?api-version=7.1`;
+                            fetch(url, 
+                            {
+                                method: 'GET',
+                                headers: {
+                                    'Authorization': 'Bearer ' + token,
+                                    'Content-Type': 'application/json'
+                                }
+                            })
+                            .then(response => response.json())
+                            .then(data => console.log(data))
+                            .catch((error) => console.error('Error:', error));
+                        });
+
                     var $branchDropdown = $("#branch-dropdown"); 
                     return {
                         load: function (widgetSettings, widgetConfigurationContext) {
