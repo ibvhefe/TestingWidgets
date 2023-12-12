@@ -7,7 +7,7 @@ VSS.require([
     "TFS/Dashboards/WidgetHelpers", 
     "Charts/Services"
     ],
-    function (WidgetHelpers, Services, buildClient) {
+    function (WidgetHelpers, Services) {
         WidgetHelpers.IncludeWidgetStyles();
         VSS.register("nightly-chart", function () { 
             return{
@@ -24,20 +24,37 @@ VSS.require([
                             fetchBuildData(token, projectName, definitionId, branchFilter, organization)
                             .then(data => {
                                 console.log(data);
-                                var buildIds = data.value.map(build => build.id).join(',');
-                                return fetchTestData(token, projectName, buildIds, organization);
+                                var buildData = data.value.map(build => ({ id: build.id, finishTime: build.finishTime }));
+                                return buildData;
                             })
-                            .then(testData => {
+                            .then((buildData) => fetchTestData(token, projectName, buildData, organization)
+                            .then(testData => ({ testData: testData, buildData: buildData })))
+                            .then(({ testData, buildData }) => {
                                 console.log(testData);
-                                testData.value.forEach(test => {
-                                    console.log(`Passed: ${test.passedTests}, Total: ${test.totalTests}`);
-                                });
-                            });
+                                console.log(buildData);
 
-                            var $container = $('#Chart-Container');
-                            
-                            chartService.createChart($container, getChartOptions());
-                            return WidgetHelpers.WidgetStatusHelper.Success();
+                                // filter out buildData that doesn't have test data
+                                var buildIds = testData.value.map(test => +test.build.id);
+                                buildData = buildData.filter(build => buildIds.includes(build.id));
+                                var finishTimes = buildData.map(build => build.finishTime).reverse();
+
+                                var testResults = testData.value.map((test, index) => {
+                                    var failedTests = test.totalTests - test.passedTests;
+                                    console.log(`Passed: ${test.passedTests}, Failed: ${failedTests}`);
+                                    console.log(index);
+                                    return { 
+                                        passedTests: test.passedTests, 
+                                        failedTests: failedTests, 
+                                        url: test.webAccessUrl, 
+                                        finishTime: finishTimes[index] 
+                                    };
+                                });
+                                var $container = $('#Chart-Container');
+                                console.log(testResults);
+                                var chartOptions = getChartOptions(testResults);
+                                chartService.createChart($container, chartOptions);
+                                return WidgetHelpers.WidgetStatusHelper.Success();
+                            });                            
                         });
                     });
                 }
@@ -59,8 +76,9 @@ function fetchBuildData(token, projectName, definitionId, branchFilter, organiza
     }).then(response => response.json());
 }
 
-function fetchTestData(token, projectName, buildIds, organization) {
-    var testUrl = `https://dev.azure.com/${organization}/${projectName}/_apis/test/runs?buildIds=${buildIds}&api-version=7.1`;
+function fetchTestData(token, projectName, buildData, organization) {
+    var buildIds = buildData.map(build => build.id).join(',');
+    var testUrl = `https://dev.azure.com/${organization}/${projectName}/_apis/test/runs?buildIds=${buildIds}&includeRunDetails=true&api-version=7.1`;
 
     return fetch(testUrl, {
         method: 'GET',
@@ -71,7 +89,10 @@ function fetchTestData(token, projectName, buildIds, organization) {
     }).then(response => response.json());
 }
 
-function getChartOptions() {
+function getChartOptions(testResults) {
+    var passedData = testResults.map(result => result.passedTests);
+    var failedData = testResults.map(result => result.failedTests);
+
     var chartOptions ={ 
         "hostOptions": { 
             "height": "290", 
@@ -82,29 +103,21 @@ function getChartOptions() {
         "series": [
             {
                 "name": "Passed",
-                "data": [100,100,105,105,105,107,107],
+                "data": passedData,
                 "color": "#207752"
             },
             {
                 "name": "Failed",
-                "data": [1,1,1,1,0,0,0],
+                "data": failedData,
                 "color": "#FF0000"
             }
         ],
         "xAxis": {
             "labelFormatMode": "dateTime_DayInMonth",
-            "labelValues": [
-                "1/1/2016",
-                "1/2/2016",
-                "1/3/2016",
-                "1/4/2016",
-                "1/5/2016",
-                "1/6/2016",
-                "1/7/2016",
-                "1/8/2016",
-                "1/9/2016",
-                "1/10/2016"
-            ]
+            "labelValues": testResults.map(result => result.finishTime),
+        },
+        "click":(e) => {
+            window.open(testResults[e.seriesDataIndex].url);
         },
         "specializedOptions": {
             "includeMarkers": true
