@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "testing-widgets",
-    "version": "0.0.88",
+    "version": "0.0.97",
     "name": "Testing widgets",
     "description": "A collection of widgets for test visualization",
     "publisher": "sebastianmechelke",
@@ -20,7 +20,8 @@
             "id": "nightly-chart",
             "type": "ms.vss-dashboards-web.widget",
             "targets": [
-                "ms.vss-dashboards-web.widget-catalog"
+                "ms.vss-dashboards-web.widget-catalog",
+                ".nightly-chart.Configuration"
             ],
             "properties": {
                 "name": "Nightly Chart",
@@ -45,11 +46,25 @@
                     "project_team"
                 ]
             }
+        },
+        {
+            "id": "nightly-chart.Configuration",
+            "type": "ms.vss-dashboards-web.widget-configuration",
+            "targets": [ "ms.vss-dashboards-web.widget-configuration" ],
+            "properties": {
+                "name": "Nightly Chart Configuration",
+                "description": "Configures the nightly chart widget",
+                "uri": "nightly-configuration.html"
+            }
         }
     ],
     "files": [
         {
             "path": "nightly-chart.html",
+            "addressable": true
+        },
+        {
+            "path": "nightly-configuration.html",
             "addressable": true
         },
         {

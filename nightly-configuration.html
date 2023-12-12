@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>                          
+        <script src="sdk/scripts/VSS.SDK.js"></script>
+        <script type="text/javascript">
+            VSS.init({                        
+                explicitNotifyLoaded: true,
+                usePlatformStyles: true
+            });
+    
+            VSS.require("TFS/Dashboards/WidgetHelpers", function (WidgetHelpers) {
+                VSS.register("nightly-chart.Configuration", function () {   
+                    var $branchDropdown = $("#branch-dropdown"); 
+                    return {
+                        load: function (widgetSettings, widgetConfigurationContext) {
+                            var settings = JSON.parse(widgetSettings.customSettings.data);
+                            if (settings && settings.branch) {
+                                $branchDropdown.val(settings.branch);
+                            }
+                            $branchDropdown.on("change", function () {
+                                    var customSettings = {data: JSON.stringify({branch: $branchDropdown.val()})};
+                                    var eventName = WidgetHelpers.WidgetEvent.ConfigurationChange;
+                                    var eventArgs = WidgetHelpers.WidgetEvent.Args(customSettings);
+                                    widgetConfigurationContext.notify(eventName, eventArgs);
+                                });
+                            return WidgetHelpers.WidgetStatusHelper.Success();
+                        },
+                        onSave: function() {
+                            var customSettings = {
+                                data: JSON.stringify({
+                                        branch: $branchDropdown.val()
+                                    })
+                            };
+                            return WidgetHelpers.WidgetConfigurationSave.Valid(customSettings); 
+                        }
+                    }
+                });
+                VSS.notifyLoadSucceeded();
+            });
+        </script>              
+    </head>
+    <body>
+        <div class="container">
+            <fieldset>
+                <label class="label">Branch: </label>
+                <select id="branch-dropdown" style="margin-top:10px">
+                    <option value="" selected disabled hidden>Please select a branch</option>
+                    <option value="main">main</option>
+                    <option value="master">master</option>
+                    <option value="release">release</option>
+                </select>
+            </fieldset>             
+        </div>
+    </body>
+</html>
