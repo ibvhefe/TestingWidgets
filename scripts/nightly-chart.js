@@ -93,6 +93,8 @@ function getChartOptions(testResults) {
     var passedData = testResults.map(result => result.passedTests);
     var failedData = testResults.map(result => result.failedTests);
 
+    
+
     var chartOptions ={ 
         "hostOptions": { 
             "height": "290", 
