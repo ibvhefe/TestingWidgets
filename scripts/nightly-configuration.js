@@ -26,7 +26,6 @@ VSS.require("TFS/Dashboards/WidgetHelpers", function (WidgetHelpers) {
                 $repositoryDropdown.change(function() {
                     var selectedRepositoryId = this.value;
                     $branchDropdown.empty(); // clear the branch dropdown
-                
                     getBranchData(selectedRepositoryId)
                         .then(branches => {
                             branches.forEach(branch => {
@@ -44,7 +43,6 @@ VSS.require("TFS/Dashboards/WidgetHelpers", function (WidgetHelpers) {
                         var option = document.createElement('option');
                         option.text = pipeline.name;
                         option.value = pipeline.id;
-                        console.log(option);
                         $pipelineDropdown.append(option);
                     });
                 });              
@@ -54,11 +52,11 @@ VSS.require("TFS/Dashboards/WidgetHelpers", function (WidgetHelpers) {
                     $branchDropdown.val(settings.branch);
                 }
                 $branchDropdown.on("change", function () {
-                        var customSettings = {data: JSON.stringify({branch: $branchDropdown.val()})};
-                        var eventName = WidgetHelpers.WidgetEvent.ConfigurationChange;
-                        var eventArgs = WidgetHelpers.WidgetEvent.Args(customSettings);
-                        widgetConfigurationContext.notify(eventName, eventArgs);
-                    });
+                    var customSettings = {data: JSON.stringify({branch: $branchDropdown.val()})};
+                    var eventName = WidgetHelpers.WidgetEvent.ConfigurationChange;
+                    var eventArgs = WidgetHelpers.WidgetEvent.Args(customSettings);
+                    widgetConfigurationContext.notify(eventName, eventArgs);
+                });
                 return WidgetHelpers.WidgetStatusHelper.Success();
             },
             onSave: function() {
@@ -111,7 +109,7 @@ function getBranchData(repositoryId) {
                 }
             })
             .then(response => response.json())
-            .then(data => data.value.map(branch => ({name: branch.name.replace('refs/heads/', ''), id: branch.objectId})))
+            .then(data => data.value.map(branch => ({name: branch.name.replace('refs/heads/', ''), id: branch.name})))
             .then(branches => branches.sort((a, b) => a.name.localeCompare(b.name)));
         });
 }

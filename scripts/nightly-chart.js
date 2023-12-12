@@ -12,9 +12,8 @@ VSS.require([
         VSS.register("nightly-chart", function () { 
             return{
                 load:function(widgetSettings){
-                    console.log(widgetSettings);
-                    var selectedBranch = widgetSettings.customSettings.data.branch;
-                    console.log(selectedBranch);
+                    var settings = JSON.parse(widgetSettings.customSettings.data);
+                    var selectedBranch = settings.branch;
 
                     return Services.ChartsService.getService()
                     .then(function(chartService) {
@@ -23,19 +22,15 @@ VSS.require([
                             var token = tokenObject.token;
                             var projectName = VSS.getWebContext().project.name;
                             var definitionId = 17;
-                            var branchFilter = "refs/heads/main";
                             var organization = VSS.getWebContext().account.name;
-                            fetchBuildData(token, projectName, definitionId, branchFilter, organization)
+                            fetchBuildData(token, projectName, definitionId, selectedBranch, organization)
                             .then(data => {
-                                console.log(data);
                                 var buildData = data.value.map(build => ({ id: build.id, finishTime: build.finishTime }));
                                 return buildData;
                             })
                             .then((buildData) => fetchTestData(token, projectName, buildData, organization)
                             .then(testData => ({ testData: testData, buildData: buildData })))
                             .then(({ testData, buildData }) => {
-                                console.log(testData);
-                                console.log(buildData);
 
                                 // filter out buildData that doesn't have test data
                                 var buildIds = testData.value.map(test => +test.build.id);
@@ -44,8 +39,6 @@ VSS.require([
 
                                 var testResults = testData.value.map((test, index) => {
                                     var failedTests = test.totalTests - test.passedTests;
-                                    console.log(`Passed: ${test.passedTests}, Failed: ${failedTests}`);
-                                    console.log(index);
                                     return { 
                                         passedTests: test.passedTests, 
                                         failedTests: failedTests, 
@@ -54,7 +47,6 @@ VSS.require([
                                     };
                                 });
                                 var $container = $('#Chart-Container');
-                                console.log(testResults);
                                 var chartOptions = getChartOptions(testResults);
                                 chartService.createChart($container, chartOptions);
                                 return WidgetHelpers.WidgetStatusHelper.Success();
@@ -70,7 +62,7 @@ VSS.require([
 
 function fetchBuildData(token, projectName, definitionId, branchFilter, organization) {
     var url = `https://dev.azure.com/${organization}/${projectName}/_apis/build/builds?definitions=${definitionId}&branchName=${branchFilter}&api-version=7.1`;
-
+    console.log(url);
     return fetch(url, {
         method: 'GET',
         headers: {
