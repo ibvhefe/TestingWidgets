@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "testing-widgets",
-    "version": "0.0.109",
+    "version": "0.0.127",
     "name": "Testing widgets",
     "description": "A collection of widgets for test visualization",
     "publisher": "sebastianmechelke",
@@ -82,6 +82,7 @@
     ],
     "scopes": [
         "vso.build",
+        "vso.code",
         "vso.identity",
         "vso.test"
     ]

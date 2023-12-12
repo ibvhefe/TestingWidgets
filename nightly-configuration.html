@@ -5,16 +5,33 @@
         <script src="scripts/nightly-configuration.js"></script>
     </head>
     <body>
-        <div class="container">
-            <fieldset>
+        <div class="widget-configuration">
+            <div class="dropdown" id="query-path-dropdown">
+                <label class="label">Repository: </label>
+                <div class="wrapper">
+                    <select id="repository-dropdown">						
+                        <option value="">Please select a repository</option>						
+                    </select>
+                </div>
+            </div>
+            <br/>
+            <div class="dropdown" id="query-path-dropdown">
                 <label class="label">Branch: </label>
-                <select id="branch-dropdown" style="margin-top:10px">
-                    <option value="" selected disabled hidden>Please select a branch</option>
-                    <option value="main">main</option>
-                    <option value="master">master</option>
-                    <option value="release">release</option>
-                </select>
-            </fieldset>             
+                <div class="wrapper">
+                    <select id="branch-dropdown">						
+                        <option value="">Please select a branch</option>						
+                    </select>
+                </div>
+            </div>
+            <br/>
+            <div class="dropdown" id="query-path-dropdown">
+                <label class="label">Pipeline: </label>
+                <div class="wrapper">
+                    <select id="pipeline-dropdown">						
+                        <option value="">Please select a pipeline</option>						
+                    </select>
+                </div>
+            </div>
         </div>
     </body>
 </html>
