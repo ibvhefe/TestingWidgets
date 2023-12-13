@@ -38,14 +38,13 @@ VSS.require("TFS/Dashboards/WidgetHelpers", function (WidgetHelpers) {
                                 var option = document.createElement('option');
                                 option.text = branch.name;
                                 option.value = branch.id;
-                                if (branch.id == settings.branch) {
+                                if (settings && branch.id == settings.branch) {
                                     option.selected = true;
                                 }
                                 $branchDropdown.append(option);
                             });
                         });
                 });
-                $repositoryDropdown.trigger('change');
 
                 let pipelinePromise = getPipelineData()
                 .then(pipelines => {

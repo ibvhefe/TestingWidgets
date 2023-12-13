@@ -12,6 +12,9 @@ VSS.require([
         VSS.register("nightly-chart", function () { 
             return{
                 load:function(widgetSettings){
+                    var $title = $('h2.title');
+                    $title.text(widgetSettings.name);
+
                     var settings = JSON.parse(widgetSettings.customSettings.data);
                     var selectedBranch = settings.branch;
 

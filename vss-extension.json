@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "testing-widgets",
-    "version": "0.0.172",
+    "version": "0.0.179",
     "name": "Testing widgets",
     "description": "A collection of widgets for test visualization",
     "publisher": "sebastianmechelke",
@@ -24,7 +24,8 @@
                 ".nightly-chart.Configuration"
             ],
             "properties": {
-                "name": "Nightly Chart",
+                "name": "Nightly Test Runs",
+                "isNameConfigurable": true,
                 "description": "Displays a chart of nightly test results",
                 "catalogIconUrl": "img/logo.png",
                 "uri": "nightly-chart.html",
@@ -52,7 +53,7 @@
             "type": "ms.vss-dashboards-web.widget-configuration",
             "targets": [ "ms.vss-dashboards-web.widget-configuration" ],
             "properties": {
-                "name": "Nightly Chart Configuration",
+                "name": "Nightly Test Runs Configuration",
                 "description": "Configures the nightly chart widget",
                 "uri": "nightly-configuration.html"
             }
