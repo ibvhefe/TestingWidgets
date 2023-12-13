@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "testing-widgets",
-    "version": "0.0.140",
+    "version": "0.0.172",
     "name": "Testing widgets",
     "description": "A collection of widgets for test visualization",
     "publisher": "sebastianmechelke",

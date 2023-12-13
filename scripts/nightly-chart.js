@@ -62,7 +62,6 @@ VSS.require([
 
 function fetchBuildData(token, projectName, definitionId, branchFilter, organization) {
     var url = `https://dev.azure.com/${organization}/${projectName}/_apis/build/builds?definitions=${definitionId}&branchName=${branchFilter}&api-version=7.1`;
-    console.log(url);
     return fetch(url, {
         method: 'GET',
         headers: {

@@ -8,12 +8,14 @@ VSS.require("TFS/Dashboards/WidgetHelpers", function (WidgetHelpers) {
     VSS.register("nightly-chart.Configuration", function () {   
         return {
             load: function (widgetSettings, widgetConfigurationContext) {
-        
+
+                var settings = JSON.parse(widgetSettings.customSettings.data);
+
                 var $repositoryDropdown = $("#repository-dropdown");
                 var $branchDropdown = $("#branch-dropdown");
                 var $pipelineDropdown = $("#pipeline-dropdown");
                 
-                getRepositoryData()
+                let repositoryPromise = getRepositoryData()
                 .then(repos => {
                     repos.forEach(repo => {
                         var option = document.createElement('option');
@@ -22,22 +24,30 @@ VSS.require("TFS/Dashboards/WidgetHelpers", function (WidgetHelpers) {
                         $repositoryDropdown.append(option);
                     });
                 });
+                
 
                 $repositoryDropdown.change(function() {
                     var selectedRepositoryId = this.value;
-                    $branchDropdown.empty(); // clear the branch dropdown
+                    if (!selectedRepositoryId) {
+                        return;
+                    }
+                    $branchDropdown.find('option:not(:first)').remove();
                     getBranchData(selectedRepositoryId)
                         .then(branches => {
                             branches.forEach(branch => {
                                 var option = document.createElement('option');
                                 option.text = branch.name;
                                 option.value = branch.id;
+                                if (branch.id == settings.branch) {
+                                    option.selected = true;
+                                }
                                 $branchDropdown.append(option);
                             });
                         });
                 });
+                $repositoryDropdown.trigger('change');
 
-                getPipelineData()
+                let pipelinePromise = getPipelineData()
                 .then(pipelines => {
                     pipelines.forEach(pipeline => {
                         var option = document.createElement('option');
@@ -47,30 +57,48 @@ VSS.require("TFS/Dashboards/WidgetHelpers", function (WidgetHelpers) {
                     });
                 });              
 
-                var settings = JSON.parse(widgetSettings.customSettings.data);
-                if (settings && settings.branch) {
-                    $branchDropdown.val(settings.branch);
-                }
                 $branchDropdown.on("change", function () {
-                    var customSettings = {data: JSON.stringify({branch: $branchDropdown.val()})};
-                    var eventName = WidgetHelpers.WidgetEvent.ConfigurationChange;
-                    var eventArgs = WidgetHelpers.WidgetEvent.Args(customSettings);
-                    widgetConfigurationContext.notify(eventName, eventArgs);
+                    notifyConfigurationChange(WidgetHelpers, widgetConfigurationContext, $branchDropdown, $repositoryDropdown, $pipelineDropdown);
                 });
+                $repositoryDropdown.on("change", function () {
+                    notifyConfigurationChange(WidgetHelpers, widgetConfigurationContext, $branchDropdown, $repositoryDropdown, $pipelineDropdown);
+                });
+                $pipelineDropdown.on("change", function () {
+                    notifyConfigurationChange(WidgetHelpers, widgetConfigurationContext, $branchDropdown, $repositoryDropdown, $pipelineDropdown);
+                });
+
+                // Dropboxes are populated with data from the configuration.
+                Promise.all([repositoryPromise, pipelinePromise]).then(() => {
+                    if (settings && settings.repository) {
+                        $repositoryDropdown.val(settings.repository);
+                    }
+                    if (settings && settings.pipeline) {
+                        $pipelineDropdown.val(settings.pipeline);
+                    }
+                    $repositoryDropdown.trigger('change');
+                });
+                
+
                 return WidgetHelpers.WidgetStatusHelper.Success();
             },
             onSave: function() {
-                var customSettings = {
-                    data: JSON.stringify({
-                            branch: $branchDropdown.val()
-                        })
-                };
+                var $repositoryDropdown = $("#repository-dropdown");
+                var $branchDropdown = $("#branch-dropdown");
+                var $pipelineDropdown = $("#pipeline-dropdown");
+                var customSettings = {data: JSON.stringify({branch: $branchDropdown.val(), repository: $repositoryDropdown.val(), pipeline: $pipelineDropdown.val()})};
                 return WidgetHelpers.WidgetConfigurationSave.Valid(customSettings); 
             }
         }
     });
     VSS.notifyLoadSucceeded();
 });
+
+function notifyConfigurationChange(widgetHelpers, widgetConfigurationContext, branchDropdown, repositoryDropdown, pipelineDropdown) {
+    var customSettings = {data: JSON.stringify({branch: branchDropdown.val(), repository: repositoryDropdown.val(), pipeline: pipelineDropdown.val()})};
+    var eventName = widgetHelpers.WidgetEvent.ConfigurationChange;
+    var eventArgs = widgetHelpers.WidgetEvent.Args(customSettings);
+    widgetConfigurationContext.notify(eventName, eventArgs);
+}
 
 function getPipelineData() {
     return VSS.getAccessToken()
