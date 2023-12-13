@@ -11,22 +11,34 @@ VSS.require([
         WidgetHelpers.IncludeWidgetStyles();
         VSS.register("nightly-chart", function () { 
             return{
-                load:function(widgetSettings){
+                load: function(widgetSettings){
                     var $title = $('h2.title');
                     $title.text(widgetSettings.name);
-
+                    if(!widgetSettings || !widgetSettings.customSettings || !widgetSettings.customSettings.data)
+                    {
+                        console.log("No settings found 1");
+                        return WidgetHelpers.WidgetStatusHelper.Failure("Please fill out all required fields");
+                    }
+                
                     var settings = JSON.parse(widgetSettings.customSettings.data);
-                    var selectedBranch = settings.branch;
-
+                    console.log(settings);
+                    if(!settings.branch || !settings.pipeline)
+                    {
+                        console.log("No settings found 2");
+                        return WidgetHelpers.WidgetStatusHelper.Failure("Please fill out all required fields");
+                    }
+                
                     return Services.ChartsService.getService()
                     .then(function(chartService) {
                         VSS.getAccessToken()
                         .then(function(tokenObject) {
                             var token = tokenObject.token;
                             var projectName = VSS.getWebContext().project.name;
-                            var definitionId = 17;
+                            var definitionId = settings.pipeline;
+                            console.log(definitionId);
+                            console.log(settings.branch);
                             var organization = VSS.getWebContext().account.name;
-                            fetchBuildData(token, projectName, definitionId, selectedBranch, organization)
+                            fetchBuildData(token, projectName, definitionId, settings.branch, organization)
                             .then(data => {
                                 var buildData = data.value.map(build => ({ id: build.id, finishTime: build.finishTime }));
                                 return buildData;
@@ -34,12 +46,12 @@ VSS.require([
                             .then((buildData) => fetchTestData(token, projectName, buildData, organization)
                             .then(testData => ({ testData: testData, buildData: buildData })))
                             .then(({ testData, buildData }) => {
-
+                
                                 // filter out buildData that doesn't have test data
                                 var buildIds = testData.value.map(test => +test.build.id);
                                 buildData = buildData.filter(build => buildIds.includes(build.id));
                                 var finishTimes = buildData.map(build => build.finishTime).reverse();
-
+                
                                 var testResults = testData.value.map((test, index) => {
                                     var failedTests = test.totalTests - test.passedTests;
                                     return { 

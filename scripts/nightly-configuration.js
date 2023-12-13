@@ -59,9 +59,6 @@ VSS.require("TFS/Dashboards/WidgetHelpers", function (WidgetHelpers) {
                 $branchDropdown.on("change", function () {
                     notifyConfigurationChange(WidgetHelpers, widgetConfigurationContext, $branchDropdown, $repositoryDropdown, $pipelineDropdown);
                 });
-                $repositoryDropdown.on("change", function () {
-                    notifyConfigurationChange(WidgetHelpers, widgetConfigurationContext, $branchDropdown, $repositoryDropdown, $pipelineDropdown);
-                });
                 $pipelineDropdown.on("change", function () {
                     notifyConfigurationChange(WidgetHelpers, widgetConfigurationContext, $branchDropdown, $repositoryDropdown, $pipelineDropdown);
                 });
