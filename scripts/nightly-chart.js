@@ -5,9 +5,10 @@ VSS.init({
 
 VSS.require([
     "TFS/Dashboards/WidgetHelpers", 
-    "Charts/Services"
+    "Charts/Services",
+    "TFS/Dashboards/Services"
     ],
-    function (WidgetHelpers, Services) {
+    function (WidgetHelpers, Services, DashboardServices) {
         WidgetHelpers.IncludeWidgetStyles();
         VSS.register("nightly-chart", function () { 
             return{
@@ -16,16 +17,35 @@ VSS.require([
                     $title.text(widgetSettings.name);
                     if(!widgetSettings || !widgetSettings.customSettings || !widgetSettings.customSettings.data)
                     {
-                        console.log("No settings found 1");
-                        return WidgetHelpers.WidgetStatusHelper.Failure("Please fill out all required fields");
+                        $('#Configure-Widget').css('display', 'block');
+                        var height = 70;
+                        if(widgetSettings.size.rowSpan == 3) {
+                            height = 260;
+                        }
+                        $('#Configure-Widget-Text').css('margin-top', height + 'px');
+
+                        DashboardServices.WidgetHostService.getService().then((DashboardServiceHost) => {
+                            DashboardServiceHost.showConfiguration() // This is what you want to hook up to your onClick event to show the widget configuration modal.
+                        });
+                        return WidgetHelpers.WidgetStatusHelper.Unconfigured();
                     }
                 
                     var settings = JSON.parse(widgetSettings.customSettings.data);
                     console.log(settings);
                     if(!settings.branch || !settings.pipeline)
                     {
-                        console.log("No settings found 2");
-                        return WidgetHelpers.WidgetStatusHelper.Failure("Please fill out all required fields");
+                        $('#Configure-Widget').css('display', 'block');
+                        var height = 70;
+                        if(widgetSettings.size.rowSpan == 3) {
+                            height = 260;
+                        }
+                        $('#Configure-Widget-Text').css('margin-top', height + 'px');
+
+
+                        DashboardServices.WidgetHostService.getService().then((DashboardServiceHost) => {
+                            DashboardServiceHost.showConfiguration() // This is what you want to hook up to your onClick event to show the widget configuration modal.
+                        });
+                        return WidgetHelpers.WidgetStatusHelper.Unconfigured();
                     }
                 
                     return Services.ChartsService.getService()

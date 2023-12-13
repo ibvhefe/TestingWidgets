@@ -3,11 +3,31 @@
 <head>
     <script src="sdk/scripts/VSS.SDK.js"></script>
     <script src="scripts/nightly-chart.js"></script>
+    <style>
+
+        #Configure-Widget {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            text-align: center;
+            display: none;
+        }
+
+        #Configure-Widget-Text {
+            margin-top: 70px;
+        }
+
+    </style>
 </head>
 <body>
     <div class="widget">
         <h2 class="title">Nightly Test Runs</h2>
         <div id="Chart-Container"></div>
+        <div id="Configure-Widget">
+            <h3 id="Configure-Widget-Text">Configure widget</h3>
+            <img src="img/unconfigured.png" />
+        </div>
     </div>
 </body>
 </html>
