@@ -62,7 +62,7 @@ VSS.require([
                                     };
                                 });
                                 var $container = $('#Chart-Container');
-                                var chartOptions = getChartOptions(testResults);
+                                var chartOptions = getChartOptions(testResults, widgetSettings.size.rowSpan);
                                 chartService.createChart($container, chartOptions);
                                 return WidgetHelpers.WidgetStatusHelper.Success();
                             });                            
@@ -99,16 +99,20 @@ function fetchTestData(token, projectName, buildData, organization) {
     }).then(response => response.json());
 }
 
-function getChartOptions(testResults) {
+function getChartOptions(testResults, rowSpan) {
     var passedData = testResults.map(result => result.passedTests);
     var failedData = testResults.map(result => result.failedTests);
-
-
-
+    var widgetWidthInPixels = $('#yourWidgetContainer').width();
+    var width = widgetWidthInPixels - 80;
+    var height = 290;
+    if(rowSpan == 3) {
+        height = 460;
+    }
+    
     var chartOptions ={ 
         "hostOptions": { 
-            "height": "290", 
-            "width": "300",
+            "height": height, 
+            "width": width,
             "title": "Nightlies",
         },
         "chartType": "stackedArea",
