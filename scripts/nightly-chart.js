@@ -17,35 +17,14 @@ VSS.require([
                     $title.text(widgetSettings.name);
                     if(!widgetSettings || !widgetSettings.customSettings || !widgetSettings.customSettings.data)
                     {
-                        $('#Configure-Widget').css('display', 'block');
-                        var height = 70;
-                        if(widgetSettings.size.rowSpan == 3) {
-                            height = 260;
-                        }
-                        $('#Configure-Widget-Text').css('margin-top', height + 'px');
-
-                        DashboardServices.WidgetHostService.getService().then((DashboardServiceHost) => {
-                            DashboardServiceHost.showConfiguration() // This is what you want to hook up to your onClick event to show the widget configuration modal.
-                        });
-                        return WidgetHelpers.WidgetStatusHelper.Unconfigured();
+                        return showConfigureWidget(widgetSettings, DashboardServices, WidgetHelpers);
                     }
                 
                     var settings = JSON.parse(widgetSettings.customSettings.data);
                     console.log(settings);
                     if(!settings.branch || !settings.pipeline)
                     {
-                        $('#Configure-Widget').css('display', 'block');
-                        var height = 70;
-                        if(widgetSettings.size.rowSpan == 3) {
-                            height = 260;
-                        }
-                        $('#Configure-Widget-Text').css('margin-top', height + 'px');
-
-
-                        DashboardServices.WidgetHostService.getService().then((DashboardServiceHost) => {
-                            DashboardServiceHost.showConfiguration() // This is what you want to hook up to your onClick event to show the widget configuration modal.
-                        });
-                        return WidgetHelpers.WidgetStatusHelper.Unconfigured();
+                        return showConfigureWidget(widgetSettings, DashboardServices, WidgetHelpers);
                     }
                 
                     return Services.ChartsService.getService()
@@ -94,6 +73,20 @@ VSS.require([
         VSS.notifyLoadSucceeded();
     }
 );
+
+function showConfigureWidget(widgetSettings, dashboardServices, widgetHelpers) {
+    $('#Configure-Widget').css('display', 'block');
+    var height = 70;
+    if(widgetSettings.size.rowSpan == 3) {
+        height = 260;
+    }
+    $('#Configure-Widget-Text').css('margin-top', height + 'px');
+
+    dashboardServices.WidgetHostService.getService().then((DashboardServiceHost) => {
+        DashboardServiceHost.showConfiguration() // This is what you want to hook up to your onClick event to show the widget configuration modal.
+    });
+    return widgetHelpers.WidgetStatusHelper.Unconfigured();
+}
 
 function fetchBuildData(token, projectName, definitionId, branchFilter, organization) {
     var url = `https://dev.azure.com/${organization}/${projectName}/_apis/build/builds?definitions=${definitionId}&branchName=${branchFilter}&api-version=7.1`;
