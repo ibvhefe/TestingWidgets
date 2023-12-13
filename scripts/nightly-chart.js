@@ -78,7 +78,7 @@ function showConfigureWidget(widgetSettings, dashboardServices, widgetHelpers) {
     $('#Configure-Widget').css('display', 'block');
     var height = 70;
     if(widgetSettings.size.rowSpan == 3) {
-        height = 260;
+        height = 150;
     }
     $('#Configure-Widget-Text').css('margin-top', height + 'px');
 

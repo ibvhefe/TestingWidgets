@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "testing-widgets",
-    "version": "0.0.238",
+    "version": "0.0.242",
     "name": "Testing widgets",
     "description": "A collection of widgets for test visualization",
     "publisher": "sebastianmechelke",
@@ -43,6 +43,10 @@
                         "columnSpan": 4
                     },
                     {
+                        "rowSpan": 2,
+                        "columnSpan": 5
+                    },
+                    {
                         "rowSpan": 3,
                         "columnSpan": 2
                     },
@@ -53,6 +57,10 @@
                     {
                         "rowSpan": 3,
                         "columnSpan": 4
+                    },
+                    {
+                        "rowSpan": 3,
+                        "columnSpan": 5
                     }
                 ],
                 "supportedScopes": [
