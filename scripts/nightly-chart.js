@@ -13,7 +13,7 @@ VSS.require([
         VSS.register("nightly-chart", function () { 
             return{
                 load: function(widgetSettings){
-
+                    var days = 100;
                     var $title = $('h2.title');
                     $title.text(widgetSettings.name);
                     if(!widgetSettings || !widgetSettings.customSettings || !widgetSettings.customSettings.data)
@@ -35,7 +35,7 @@ VSS.require([
                             var projectName = VSS.getWebContext().project.name;
                             var definitionId = settings.pipeline;
                             var organization = VSS.getWebContext().account.name;
-                            fetchBuildData(token, projectName, definitionId, settings.branch, organization, settings.reason)
+                            fetchBuildData(token, projectName, definitionId, settings.branch, organization, settings.reason, days)
                             .then(data => {
                                 if(data.count < 1) {
                                     var $container = $('#Chart-Container');
@@ -45,29 +45,10 @@ VSS.require([
                                 var buildData = data.value.map(build => ({ id: build.id, finishTime: build.finishTime }));
                                 return buildData;
                             })
-                            .then((buildData) => fetchTestData(token, projectName, buildData, organization)
-                                .then(testData => ({ testData: testData, buildData: buildData })))
-                            .then(({ testData, buildData }) => {                                
-                                // filter out test data that doesn't have matching build ids
-                                var buildIds = buildData.map(build => build.id);
-                                var tests = testData.value.filter(test => buildIds.includes(parseInt(test.build.id)));
-
-                                // filter out buildData that doesn't have test data
-                                var testBuildIds = tests.map(test => +test.build.id);
-                                buildData = buildData.filter(build => testBuildIds.includes(build.id));
-                                var finishTimes = buildData.map(build => build.finishTime).reverse();                                                                
-
-                                var testResults = tests.map((test, index) => {
-                                    var failedTests = test.totalTests - test.passedTests;
-                                    return { 
-                                        passedTests: test.passedTests, 
-                                        failedTests: failedTests, 
-                                        url: test.webAccessUrl, 
-                                        finishTime: finishTimes[index] 
-                                    };
-                                });
+                            .then(buildData => fetchTestData(token, projectName, organization, buildData))
+                            .then(testData => {       
                                 var $container = $('#Chart-Container');
-                                var chartOptions = getChartOptions(testResults, widgetSettings.size.rowSpan);
+                                var chartOptions = getChartOptions(testData, widgetSettings.size.rowSpan);
                                 chartService.createChart($container, chartOptions);
                                 return WidgetHelpers.WidgetStatusHelper.Success();
                             });                            
@@ -94,8 +75,13 @@ function showConfigureWidget(widgetSettings, dashboardServices, widgetHelpers) {
     return widgetHelpers.WidgetStatusHelper.Unconfigured();
 }
 
-function fetchBuildData(token, projectName, definitionId, branchFilter, organization, reason) {
-    var url = `https://dev.azure.com/${organization}/${projectName}/_apis/build/builds?definitions=${definitionId}&branchName=${branchFilter}&reasonFilter=${reason}&api-version=7.1`;
+function fetchBuildData(token, projectName, definitionId, branchFilter, organization, reason, days) {
+    var date = new Date();
+    date.setDate(date.getDate() - days);
+    var minDate = date.toISOString().slice(0,10);
+
+    var url = `https://dev.azure.com/${organization}/${projectName}/_apis/build/builds?definitions=${definitionId}&branchName=${branchFilter}&reasonFilter=${reason}&minTime=${minDate}&api-version=7.1`;
+    console.log(url);
     return fetch(url, {
         method: 'GET',
         headers: {
@@ -105,21 +91,31 @@ function fetchBuildData(token, projectName, definitionId, branchFilter, organiza
     }).then(response => response.json());
 }
 
-function fetchTestData(token, projectName, buildData, organization) {
-    var buildIds = buildData.map(build => build.id).join(',');
-    var testUrl = `https://dev.azure.com/${organization}/${projectName}/_apis/test/runs?buildIds=${buildIds}&includeRunDetails=true&api-version=7.1`;
-    return fetch(testUrl, {
-        method: 'GET',
-        headers: {
-            'Authorization': 'Bearer ' + token,
-            'Content-Type': 'application/json'
-        }
-    }).then(response => response.json());
+function fetchTestData(token, projectName,  organization, buildData) {    
+    var promises = [];
+    buildData.forEach(build => {
+        var url = `https://vstmr.dev.azure.com/${organization}/${projectName}/_apis/testresults/resultdetailsbybuild?buildId=${build.id}&api-version=7.2-preview.1`;
+        var promise = fetch(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            }
+        }).then(response => response.json())
+        .then(data => ({data, finishTime: build.finishTime}));
+
+        promises.push(promise);
+    });
+
+    return Promise.all(promises);
 }
 
 function getChartOptions(testResults, rowSpan) {
-    var passedData = testResults.map(result => result.passedTests);
-    var failedData = testResults.map(result => result.failedTests);
+    var nonEmptyResults = testResults.filter(result => result.data.resultsForGroup && result.data.resultsForGroup.length > 0);
+    nonEmptyResults.sort((a, b) => new Date(a.finishTime) - new Date(b.finishTime));
+    var outcomes = nonEmptyResults.map(result => result.data.resultsForGroup[0].resultsCountByOutcome);
+    console.log(outcomes);
+
     var widgetWidthInPixels = $('#yourWidgetContainer').width();
     var width = widgetWidthInPixels - 80;
     var height = 290;
@@ -137,22 +133,27 @@ function getChartOptions(testResults, rowSpan) {
         "series": [
             {
                 "name": "Passed",
-                "data": passedData,
+                "data": outcomes.map(outcome => outcome?.Passed?.count ?? 0),
                 "color": "#207752"
             },
             {
                 "name": "Failed",
-                "data": failedData,
+                "data": outcomes.map(outcome => outcome?.Failed?.count ?? 0),
                 "color": "#FF0000"
+            },
+            {
+                "name": "Not executed",
+                "data": outcomes.map(outcome => outcome?.NotExecuted?.count ?? 0),
+                "color": "#909090"
             }
         ],
         "xAxis": {
             "labelFormatMode": "dateTime_DayInMonth",
-            "labelValues": testResults.map(result => result.finishTime),
+            "labelValues": nonEmptyResults.map(result => result.finishTime),
         },
-        "click":(e) => {
-            window.open(testResults[e.seriesDataIndex].url);
-        },
+        // "click":(e) => {
+        //     window.open(testResults[e.seriesDataIndex].url);
+        // },
         "specializedOptions": {
             "includeMarkers": true
         }
