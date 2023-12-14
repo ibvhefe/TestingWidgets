@@ -13,20 +13,18 @@ VSS.require([
         VSS.register("nightly-chart", function () { 
             return{
                 load: function(widgetSettings){
-                    var days = 100;
                     var $title = $('h2.title');
                     $title.text(widgetSettings.name);
                     if(!widgetSettings || !widgetSettings.customSettings || !widgetSettings.customSettings.data)
                     {
                         return showConfigureWidget(widgetSettings, DashboardServices, WidgetHelpers);
                     }
-                
                     var settings = JSON.parse(widgetSettings.customSettings.data);
-                    if(!settings.branch || !settings.pipeline || !settings.reason)
+                    if(!settings.branch || !settings.pipeline || !settings.reason || !settings.days || settings.days=="" || settings.days < 1 || isNaN(settings.days))
                     {
                         return showConfigureWidget(widgetSettings, DashboardServices, WidgetHelpers);
                     }
-                
+
                     return Services.ChartsService.getService()
                     .then(function(chartService) {
                         VSS.getAccessToken()
@@ -35,7 +33,7 @@ VSS.require([
                             var projectName = VSS.getWebContext().project.name;
                             var definitionId = settings.pipeline;
                             var organization = VSS.getWebContext().account.name;
-                            fetchBuildData(token, projectName, definitionId, settings.branch, organization, settings.reason, days)
+                            fetchBuildData(token, projectName, definitionId, settings.branch, organization, settings.reason, settings.days)
                             .then(data => {
                                 if(data.count < 1) {
                                     var $container = $('#Chart-Container');
@@ -47,6 +45,7 @@ VSS.require([
                             })
                             .then(buildData => fetchTestData(token, projectName, organization, buildData))
                             .then(testData => {       
+                                console.log(testData);
                                 var $container = $('#Chart-Container');
                                 var chartOptions = getChartOptions(testData, widgetSettings.size.rowSpan);
                                 chartService.createChart($container, chartOptions);
@@ -102,7 +101,7 @@ function fetchTestData(token, projectName,  organization, buildData) {
                 'Content-Type': 'application/json'
             }
         }).then(response => response.json())
-        .then(data => ({data, finishTime: build.finishTime}));
+        .then(data => ({data, finishTime: build.finishTime, url: `https://dev.azure.com/${organization}/${projectName}/_build/results?buildId=${build.id}&view=results`}));
 
         promises.push(promise);
     });
@@ -113,6 +112,7 @@ function fetchTestData(token, projectName,  organization, buildData) {
 function getChartOptions(testResults, rowSpan) {
     var nonEmptyResults = testResults.filter(result => result.data.resultsForGroup && result.data.resultsForGroup.length > 0);
     nonEmptyResults.sort((a, b) => new Date(a.finishTime) - new Date(b.finishTime));
+    var urls = nonEmptyResults.map(result => result.url);
     var outcomes = nonEmptyResults.map(result => result.data.resultsForGroup[0].resultsCountByOutcome);
     console.log(outcomes);
 
@@ -151,9 +151,9 @@ function getChartOptions(testResults, rowSpan) {
             "labelFormatMode": "dateTime_DayInMonth",
             "labelValues": nonEmptyResults.map(result => result.finishTime),
         },
-        // "click":(e) => {
-        //     window.open(testResults[e.seriesDataIndex].url);
-        // },
+        "click":(e) => {
+            window.open(urls[e.seriesDataIndex]);
+        },
         "specializedOptions": {
             "includeMarkers": true
         }

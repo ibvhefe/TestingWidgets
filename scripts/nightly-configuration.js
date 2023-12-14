@@ -15,6 +15,7 @@ VSS.require("TFS/Dashboards/WidgetHelpers", function (WidgetHelpers) {
                 var $branchDropdown = $("#branch-dropdown");
                 var $pipelineDropdown = $("#pipeline-dropdown");
                 var $reasonDropdown = $("#reason-dropdown");
+                var $daysTextbox = $("#days-textbox");
                 
                 let repositoryPromise = getRepositoryData()
                 .then(repos => {
@@ -58,13 +59,16 @@ VSS.require("TFS/Dashboards/WidgetHelpers", function (WidgetHelpers) {
                 });              
 
                 $branchDropdown.on("change", function () {
-                    notifyConfigurationChange(WidgetHelpers, widgetConfigurationContext, $branchDropdown, $repositoryDropdown, $pipelineDropdown, $reasonDropdown);
+                    notifyConfigurationChange(WidgetHelpers, widgetConfigurationContext, $branchDropdown, $repositoryDropdown, $pipelineDropdown, $reasonDropdown, $daysTextbox);
                 });
                 $pipelineDropdown.on("change", function () {
-                    notifyConfigurationChange(WidgetHelpers, widgetConfigurationContext, $branchDropdown, $repositoryDropdown, $pipelineDropdown, $reasonDropdown);
+                    notifyConfigurationChange(WidgetHelpers, widgetConfigurationContext, $branchDropdown, $repositoryDropdown, $pipelineDropdown, $reasonDropdown, $daysTextbox);
                 });
                 $reasonDropdown.on("change", function () {
-                    notifyConfigurationChange(WidgetHelpers, widgetConfigurationContext, $branchDropdown, $repositoryDropdown, $pipelineDropdown, $reasonDropdown);
+                    notifyConfigurationChange(WidgetHelpers, widgetConfigurationContext, $branchDropdown, $repositoryDropdown, $pipelineDropdown, $reasonDropdown, $daysTextbox);
+                });
+                $daysTextbox.on("change", function () {
+                    notifyConfigurationChange(WidgetHelpers, widgetConfigurationContext, $branchDropdown, $repositoryDropdown, $pipelineDropdown, $reasonDropdown, $daysTextbox);
                 });
 
                 // Dropboxes are populated with data from the configuration.
@@ -76,6 +80,7 @@ VSS.require("TFS/Dashboards/WidgetHelpers", function (WidgetHelpers) {
                         $pipelineDropdown.val(settings.pipeline);
                     }
                     $reasonDropdown.val(settings.reason);
+                    $daysTextbox.val(settings.days);
                     $repositoryDropdown.trigger('change');
                 });
                 
@@ -87,7 +92,8 @@ VSS.require("TFS/Dashboards/WidgetHelpers", function (WidgetHelpers) {
                 var $branchDropdown = $("#branch-dropdown");
                 var $pipelineDropdown = $("#pipeline-dropdown");
                 var $reasonDropdown = $("#reason-dropdown");
-                var customSettings = {data: JSON.stringify({branch: $branchDropdown.val(), repository: $repositoryDropdown.val(), pipeline: $pipelineDropdown.val(), reason: $reasonDropdown.val()})};
+                var $daysTextbox = $("#days-textbox");
+                var customSettings = {data: JSON.stringify({branch: $branchDropdown.val(), repository: $repositoryDropdown.val(), pipeline: $pipelineDropdown.val(), reason: $reasonDropdown.val(), days: $daysTextbox.val()})};
                 return WidgetHelpers.WidgetConfigurationSave.Valid(customSettings); 
             }
         }
@@ -95,8 +101,18 @@ VSS.require("TFS/Dashboards/WidgetHelpers", function (WidgetHelpers) {
     VSS.notifyLoadSucceeded();
 });
 
-function notifyConfigurationChange(widgetHelpers, widgetConfigurationContext, branchDropdown, repositoryDropdown, pipelineDropdown, reasonDropdown) {
-    var customSettings = {data: JSON.stringify({branch: branchDropdown.val(), repository: repositoryDropdown.val(), pipeline: pipelineDropdown.val(), reason: reasonDropdown.val()})};
+function notifyConfigurationChange(widgetHelpers, widgetConfigurationContext, branchDropdown, repositoryDropdown, pipelineDropdown, reasonDropdown, daysDropdown) {
+    var customSettings = 
+    {
+        data: JSON.stringify(
+            {
+                branch: branchDropdown.val(), 
+                repository: repositoryDropdown.val(), 
+                pipeline: pipelineDropdown.val(), 
+                reason: reasonDropdown.val(),
+                days: daysDropdown.val()
+            })
+    };
     var eventName = widgetHelpers.WidgetEvent.ConfigurationChange;
     var eventArgs = widgetHelpers.WidgetEvent.Args(customSettings);
     widgetConfigurationContext.notify(eventName, eventArgs);
