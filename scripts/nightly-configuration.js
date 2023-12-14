@@ -14,6 +14,7 @@ VSS.require("TFS/Dashboards/WidgetHelpers", function (WidgetHelpers) {
                 var $repositoryDropdown = $("#repository-dropdown");
                 var $branchDropdown = $("#branch-dropdown");
                 var $pipelineDropdown = $("#pipeline-dropdown");
+                var $reasonDropdown = $("#reason-dropdown");
                 
                 let repositoryPromise = getRepositoryData()
                 .then(repos => {
@@ -57,10 +58,13 @@ VSS.require("TFS/Dashboards/WidgetHelpers", function (WidgetHelpers) {
                 });              
 
                 $branchDropdown.on("change", function () {
-                    notifyConfigurationChange(WidgetHelpers, widgetConfigurationContext, $branchDropdown, $repositoryDropdown, $pipelineDropdown);
+                    notifyConfigurationChange(WidgetHelpers, widgetConfigurationContext, $branchDropdown, $repositoryDropdown, $pipelineDropdown, $reasonDropdown);
                 });
                 $pipelineDropdown.on("change", function () {
-                    notifyConfigurationChange(WidgetHelpers, widgetConfigurationContext, $branchDropdown, $repositoryDropdown, $pipelineDropdown);
+                    notifyConfigurationChange(WidgetHelpers, widgetConfigurationContext, $branchDropdown, $repositoryDropdown, $pipelineDropdown, $reasonDropdown);
+                });
+                $reasonDropdown.on("change", function () {
+                    notifyConfigurationChange(WidgetHelpers, widgetConfigurationContext, $branchDropdown, $repositoryDropdown, $pipelineDropdown, $reasonDropdown);
                 });
 
                 // Dropboxes are populated with data from the configuration.
@@ -71,6 +75,7 @@ VSS.require("TFS/Dashboards/WidgetHelpers", function (WidgetHelpers) {
                     if (settings && settings.pipeline) {
                         $pipelineDropdown.val(settings.pipeline);
                     }
+                    $reasonDropdown.val(settings.reason);
                     $repositoryDropdown.trigger('change');
                 });
                 
@@ -81,7 +86,8 @@ VSS.require("TFS/Dashboards/WidgetHelpers", function (WidgetHelpers) {
                 var $repositoryDropdown = $("#repository-dropdown");
                 var $branchDropdown = $("#branch-dropdown");
                 var $pipelineDropdown = $("#pipeline-dropdown");
-                var customSettings = {data: JSON.stringify({branch: $branchDropdown.val(), repository: $repositoryDropdown.val(), pipeline: $pipelineDropdown.val()})};
+                var $reasonDropdown = $("#reason-dropdown");
+                var customSettings = {data: JSON.stringify({branch: $branchDropdown.val(), repository: $repositoryDropdown.val(), pipeline: $pipelineDropdown.val(), reason: $reasonDropdown.val()})};
                 return WidgetHelpers.WidgetConfigurationSave.Valid(customSettings); 
             }
         }
@@ -89,8 +95,8 @@ VSS.require("TFS/Dashboards/WidgetHelpers", function (WidgetHelpers) {
     VSS.notifyLoadSucceeded();
 });
 
-function notifyConfigurationChange(widgetHelpers, widgetConfigurationContext, branchDropdown, repositoryDropdown, pipelineDropdown) {
-    var customSettings = {data: JSON.stringify({branch: branchDropdown.val(), repository: repositoryDropdown.val(), pipeline: pipelineDropdown.val()})};
+function notifyConfigurationChange(widgetHelpers, widgetConfigurationContext, branchDropdown, repositoryDropdown, pipelineDropdown, reasonDropdown) {
+    var customSettings = {data: JSON.stringify({branch: branchDropdown.val(), repository: repositoryDropdown.val(), pipeline: pipelineDropdown.val(), reason: reasonDropdown.val()})};
     var eventName = widgetHelpers.WidgetEvent.ConfigurationChange;
     var eventArgs = widgetHelpers.WidgetEvent.Args(customSettings);
     widgetConfigurationContext.notify(eventName, eventArgs);

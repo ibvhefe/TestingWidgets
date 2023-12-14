@@ -13,6 +13,7 @@ VSS.require([
         VSS.register("nightly-chart", function () { 
             return{
                 load: function(widgetSettings){
+
                     var $title = $('h2.title');
                     $title.text(widgetSettings.name);
                     if(!widgetSettings || !widgetSettings.customSettings || !widgetSettings.customSettings.data)
@@ -21,8 +22,7 @@ VSS.require([
                     }
                 
                     var settings = JSON.parse(widgetSettings.customSettings.data);
-                    console.log(settings);
-                    if(!settings.branch || !settings.pipeline)
+                    if(!settings.branch || !settings.pipeline || !settings.reason)
                     {
                         return showConfigureWidget(widgetSettings, DashboardServices, WidgetHelpers);
                     }
@@ -34,24 +34,30 @@ VSS.require([
                             var token = tokenObject.token;
                             var projectName = VSS.getWebContext().project.name;
                             var definitionId = settings.pipeline;
-                            console.log(definitionId);
-                            console.log(settings.branch);
                             var organization = VSS.getWebContext().account.name;
-                            fetchBuildData(token, projectName, definitionId, settings.branch, organization)
+                            fetchBuildData(token, projectName, definitionId, settings.branch, organization, settings.reason)
                             .then(data => {
+                                if(data.count < 1) {
+                                    var $container = $('#Chart-Container');
+                                    $container.text('At least 1 build is required to show a chart.');
+                                    return WidgetHelpers.WidgetStatusHelper.Success();
+                                }
                                 var buildData = data.value.map(build => ({ id: build.id, finishTime: build.finishTime }));
                                 return buildData;
                             })
                             .then((buildData) => fetchTestData(token, projectName, buildData, organization)
-                            .then(testData => ({ testData: testData, buildData: buildData })))
-                            .then(({ testData, buildData }) => {
-                
+                                .then(testData => ({ testData: testData, buildData: buildData })))
+                            .then(({ testData, buildData }) => {                                
+                                // filter out test data that doesn't have matching build ids
+                                var buildIds = buildData.map(build => build.id);
+                                var tests = testData.value.filter(test => buildIds.includes(parseInt(test.build.id)));
+
                                 // filter out buildData that doesn't have test data
-                                var buildIds = testData.value.map(test => +test.build.id);
-                                buildData = buildData.filter(build => buildIds.includes(build.id));
-                                var finishTimes = buildData.map(build => build.finishTime).reverse();
-                
-                                var testResults = testData.value.map((test, index) => {
+                                var testBuildIds = tests.map(test => +test.build.id);
+                                buildData = buildData.filter(build => testBuildIds.includes(build.id));
+                                var finishTimes = buildData.map(build => build.finishTime).reverse();                                                                
+
+                                var testResults = tests.map((test, index) => {
                                     var failedTests = test.totalTests - test.passedTests;
                                     return { 
                                         passedTests: test.passedTests, 
@@ -88,8 +94,8 @@ function showConfigureWidget(widgetSettings, dashboardServices, widgetHelpers) {
     return widgetHelpers.WidgetStatusHelper.Unconfigured();
 }
 
-function fetchBuildData(token, projectName, definitionId, branchFilter, organization) {
-    var url = `https://dev.azure.com/${organization}/${projectName}/_apis/build/builds?definitions=${definitionId}&branchName=${branchFilter}&api-version=7.1`;
+function fetchBuildData(token, projectName, definitionId, branchFilter, organization, reason) {
+    var url = `https://dev.azure.com/${organization}/${projectName}/_apis/build/builds?definitions=${definitionId}&branchName=${branchFilter}&reasonFilter=${reason}&api-version=7.1`;
     return fetch(url, {
         method: 'GET',
         headers: {
@@ -102,7 +108,6 @@ function fetchBuildData(token, projectName, definitionId, branchFilter, organiza
 function fetchTestData(token, projectName, buildData, organization) {
     var buildIds = buildData.map(build => build.id).join(',');
     var testUrl = `https://dev.azure.com/${organization}/${projectName}/_apis/test/runs?buildIds=${buildIds}&includeRunDetails=true&api-version=7.1`;
-
     return fetch(testUrl, {
         method: 'GET',
         headers: {
