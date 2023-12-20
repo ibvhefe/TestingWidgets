@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>                          
+        <script src="sdk/scripts/VSS.SDK.js"></script>
+        <script src="scripts/flaky-configuration.js"></script>
+        <script>
+            var $singleLineInput = $(".single-line-text-input input");
+            var $errorSingleLineInput = $(".single-line-text-input .validation-error-text");
+    
+            $singleLineInput.on("input", function(){
+                if ($singleLineInput.val() == ""){
+                    $errorSingleLineInput.text("Please enter an amount of days.");
+                    $errorSingleLineInput.parent().css("visibility", "visible");
+                    return;
+                }
+                if (isNaN($singleLineInput.val())){
+                    $errorSingleLineInput.text("Please enter a valid number.");
+                    $errorSingleLineInput.parent().css("visibility", "visible");
+                    return;
+                }
+                $errorSingleLineInput.parent().css("visibility", "hidden");
+            });
+        </script>
+    </head>
+    <body>
+        <div class="widget-configuration">
+            <div class="dropdown">
+                <label class="label">Repository *:</label>
+                <div class="wrapper">
+                    <select id="repository-dropdown">						
+                        <option value="">Please select a repository</option>						
+                    </select>
+                </div>
+            </div>
+            <br/>
+            <div class="dropdown">
+                <label class="label">Branch *</label>
+                <div class="wrapper">
+                    <select id="branch-dropdown">						
+                        <option value="">Please select a branch</option>						
+                    </select>
+                </div>
+            </div>
+            <br/>
+            <div class="dropdown">
+                <label class="label">Pipeline *</label>
+                <div class="wrapper">
+                    <select id="pipeline-dropdown">						
+                        <option value="">Please select a pipeline</option>						
+                    </select>
+                </div>
+            </div>
+            <br/>
+            <div class="dropdown">
+                <label class="label">Build reason *</label>
+                <div class="wrapper">
+                    <select id="reason-dropdown">						
+                        <option value="all">All</option>
+                        <option value="schedule">Schedule</option>
+                    </select>
+                </div>
+            </div>
+            <br/>
+            <div class="single-line-text-input">
+                <label>Days to look back *</label>
+                <input type="text" id="days-textbox"></input>		
+        
+                <span class="validation-error">
+                    <span class="icon-error-exclamation"></span>
+                    <span class="validation-error-text"></span>
+                </span>
+            </div>
+        </div>
+    </body>
+</html>

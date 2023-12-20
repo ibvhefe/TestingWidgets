@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "testing-widgets",
-    "version": "0.0.321",
+    "version": "0.0.325",
     "name": "Testing widgets",
     "description": "A collection of widgets for test visualization",
     "publisher": "sebastianmechelke",
@@ -77,6 +77,52 @@
                 "description": "Configures the nightly chart widget",
                 "uri": "nightly-configuration.html"
             }
+        },
+        {
+            "id": "flaky-tests-table",
+            "type": "ms.vss-dashboards-web.widget",
+            "targets": [
+                "ms.vss-dashboards-web.widget-catalog",
+                ".flaky-tests-table.Configuration"
+            ],
+            "properties": {
+                "name": "Flaky test table",
+                "isNameConfigurable": true,
+                "description": "Displays a table of flaky tests",
+                "catalogIconUrl": "img/flakyTestIcon.png",
+                "uri": "flaky-table.html",
+                "supportedSizes": [
+                    {
+                        "rowSpan": 2,
+                        "columnSpan": 2
+                    },
+                    {
+                        "rowSpan": 2,
+                        "columnSpan": 3
+                    },
+                    {
+                        "rowSpan": 3,
+                        "columnSpan": 2
+                    },
+                    {
+                        "rowSpan": 3,
+                        "columnSpan": 3
+                    }
+                ],
+                "supportedScopes": [
+                    "project_team"
+                ]
+            }
+        },
+        {
+            "id": "flaky-tests-table.Configuration",
+            "type": "ms.vss-dashboards-web.widget-configuration",
+            "targets": [ "ms.vss-dashboards-web.widget-configuration" ],
+            "properties": {
+                "name": "Flaky test table configuration",
+                "description": "Configures the flaky table widget",
+                "uri": "flaky-configuration.html"
+            }
         }
     ],
     "files": [
@@ -86,6 +132,14 @@
         },
         {
             "path": "nightly-configuration.html",
+            "addressable": true
+        },
+        {
+            "path": "flaky-table.html",
+            "addressable": true
+        },
+        {
+            "path": "flaky-configuration.html",
             "addressable": true
         },
         {
