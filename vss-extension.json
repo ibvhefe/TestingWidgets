@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "testing-widgets",
-    "version": "0.0.325",
+    "version": "0.0.327",
     "name": "Testing widgets",
     "description": "A collection of widgets for test visualization",
     "publisher": "sebastianmechelke",
@@ -83,7 +83,7 @@
             "type": "ms.vss-dashboards-web.widget",
             "targets": [
                 "ms.vss-dashboards-web.widget-catalog",
-                ".flaky-tests-table.Configuration"
+                ".nightly-chart.Configuration"
             ],
             "properties": {
                 "name": "Flaky test table",
@@ -136,10 +136,6 @@
         },
         {
             "path": "flaky-table.html",
-            "addressable": true
-        },
-        {
-            "path": "flaky-configuration.html",
             "addressable": true
         },
         {
