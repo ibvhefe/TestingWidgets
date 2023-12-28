@@ -5,15 +5,13 @@ VSS.init({
 
 VSS.require([
     "TFS/Dashboards/WidgetHelpers", 
-    "Charts/Services",
     "TFS/Dashboards/Services"
     ],
-    function (WidgetHelpers, Services, DashboardServices) {
+    function (WidgetHelpers, DashboardServices) {
         WidgetHelpers.IncludeWidgetStyles();
         VSS.register("flaky-tests-table", function () { 
             return{
                 load: function(widgetSettings){
-                    console.log(widgetSettings);
                     var $title = $('h2.title');
                     $title.text(widgetSettings.name);
                     if(!widgetSettings || !widgetSettings.customSettings || !widgetSettings.customSettings.data)
@@ -26,33 +24,31 @@ VSS.require([
                         return showConfigureWidget(widgetSettings, DashboardServices, WidgetHelpers);
                     }
 
-                    return Services.ChartsService.getService()
-                    .then(function(chartService) {
-                        VSS.getAccessToken()
-                        .then(function(tokenObject) {
-                            var token = tokenObject.token;
-                            var projectName = VSS.getWebContext().project.name;
-                            var definitionId = settings.pipeline;
-                            var organization = VSS.getWebContext().account.name;
-                            fetchBuildData(token, projectName, definitionId, settings.branch, organization, settings.reason, settings.days)
-                            .then(data => {
-                                if(data.count < 1) {
-                                    var $container = $('#Chart-Container');
-                                    $container.text('At least 1 build is required to show a chart.');
-                                    return WidgetHelpers.WidgetStatusHelper.Success();
-                                }
-                                var buildData = data.value.map(build => ({ id: build.id, finishTime: build.finishTime }));
-                                return buildData;
-                            })
-                            .then(buildData => fetchTestData(token, projectName, organization, buildData))
-                            .then(testData => {       
-                                console.log(testData);
+                    return VSS.getAccessToken()
+                    .then(function(tokenObject) {
+                        var token = tokenObject.token;
+                        var projectName = VSS.getWebContext().project.name;
+                        var definitionId = settings.pipeline;
+                        var organization = VSS.getWebContext().account.name;
+                        fetchBuildData(token, projectName, definitionId, settings.branch, organization, settings.reason, settings.days)
+                        .then(data => {
+                            if(data.count < 1) {
                                 var $container = $('#Chart-Container');
-                                var chartOptions = getChartOptions(testData, widgetSettings.size.rowSpan);
-                                chartService.createChart($container, chartOptions);
+                                $container.text('At least 1 build is required to show a chart.');
                                 return WidgetHelpers.WidgetStatusHelper.Success();
-                            });                            
-                        });
+                            }
+                            var buildData = data.value.map(build => ({ id: build.id, finishTime: build.finishTime }));
+                            return buildData;
+                        })
+                        .then(buildData => fetchTestData(token, projectName, organization, buildData))
+                        .then(testData => getFailedTests(token, projectName, organization, testData).then(failedTests => ({ testData, failedTests })))
+                        .then(({ testData, failedTests }) => {
+                            var flakyTests = createFlakeTestTableData(testData,failedTests);
+                            // var $container = $('#Chart-Container');
+                            // var chartOptions = getChartOptions(testData, widgetSettings.size.rowSpan);
+                            // chartService.createChart($container, chartOptions);
+                            return WidgetHelpers.WidgetStatusHelper.Success();
+                        });                            
                     });
                 }
             }
@@ -60,6 +56,36 @@ VSS.require([
         VSS.notifyLoadSucceeded();
     }
 );
+
+function createFlakeTestTableData(testData, failedTests) {
+    var table = [];
+    for(var f = 0; f < failedTests.length; f++) {
+        var runs = [];
+        var testCaseReferenceId = failedTests[f].testCaseReferenceId
+        var testCaseName = failedTests[f].automatedTestName;
+        for(var i = testData.length-1; i >= 0 ; i--) {
+            var testSet = testData[i];
+            var testExists = false;
+            for(var j = 0; j < testSet.data.resultsForGroup[0].results.length; j++) {
+                var test = testSet.data.resultsForGroup[0].results[j];
+                if(test.testCaseReferenceId == testCaseReferenceId) {
+                    runs.push(test.outcome);
+                    testExists = true;
+                    break;
+                }
+            }
+            if(testExists == false) {
+                runs.push('n/a');
+            }
+        }
+
+        table.push({testCaseName, runs});
+    }
+    console.log(table);
+    
+    return table;
+}
+
 
 function showConfigureWidget(widgetSettings, dashboardServices, widgetHelpers) {
     $('#Configure-Widget').css('display', 'block');
@@ -81,7 +107,6 @@ function fetchBuildData(token, projectName, definitionId, branchFilter, organiza
     var minDate = date.toISOString().slice(0,10);
 
     var url = `https://dev.azure.com/${organization}/${projectName}/_apis/build/builds?definitions=${definitionId}&branchName=${branchFilter}&reasonFilter=${reason}&minTime=${minDate}&api-version=7.1`;
-    console.log(url);
     return fetch(url, {
         method: 'GET',
         headers: {
@@ -110,54 +135,33 @@ function fetchTestData(token, projectName,  organization, buildData) {
     return Promise.all(promises);
 }
 
-function getChartOptions(testResults, rowSpan) {
-    var nonEmptyResults = testResults.filter(result => result.data.resultsForGroup && result.data.resultsForGroup.length > 0);
-    nonEmptyResults.sort((a, b) => new Date(a.finishTime) - new Date(b.finishTime));
-    var urls = nonEmptyResults.map(result => result.url);
-    var outcomes = nonEmptyResults.map(result => result.data.resultsForGroup[0].resultsCountByOutcome);
-    console.log(outcomes);
-
-    var widgetWidthInPixels = $('#yourWidgetContainer').width();
-    var width = widgetWidthInPixels - 80;
-    var height = 290;
-    if(rowSpan == 3) {
-        height = 460;
-    }
-    
-    var chartOptions ={ 
-        "hostOptions": { 
-            "height": height, 
-            "width": width,
-            "title": "Nightlies",
-        },
-        "chartType": "stackedArea",
-        "series": [
-            {
-                "name": "Passed",
-                "data": outcomes.map(outcome => outcome?.Passed?.count ?? 0),
-                "color": "#207752"
-            },
-            {
-                "name": "Failed",
-                "data": outcomes.map(outcome => outcome?.Failed?.count ?? 0),
-                "color": "#FF0000"
-            },
-            {
-                "name": "Not executed",
-                "data": outcomes.map(outcome => outcome?.NotExecuted?.count ?? 0),
-                "color": "#909090"
+function getFailedTests(token, projectName,  organization, testData) {  
+    var failedTests = [];
+    var failedTestIds = [];
+    testData.forEach(testRun => {
+        testRun.data.resultsForGroup[0].results.forEach(test => {
+            runId = test.testRun.id;
+            resultId = test.id;
+            referenceId = test.testCaseReferenceId;
+            if(test.outcome == 'Failed' && test.testCaseReferenceId != null && failedTestIds.includes(referenceId) == false) {
+                failedTests.push({referenceId,runId,resultId});
+                failedTestIds.push(referenceId);
             }
-        ],
-        "xAxis": {
-            "labelFormatMode": "dateTime_DayInMonth",
-            "labelValues": nonEmptyResults.map(result => result.finishTime),
-        },
-        "click":(e) => {
-            window.open(urls[e.seriesDataIndex]);
-        },
-        "specializedOptions": {
-            "includeMarkers": true
-        }
-    };
-    return chartOptions;
+        });
+    });
+
+    var promises = [];
+    failedTests.forEach(failed => {
+        var url = `https://vstmr.dev.azure.com/${organization}/${projectName}/_apis/testresults/runs/${failed.runId}/results/${failed.resultId}?api-version=7.2-preview.2`;
+        var promise = fetch(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            }
+        }).then(response => response.json());
+        promises.push(promise);
+    });
+
+    return Promise.all(promises);
 }
