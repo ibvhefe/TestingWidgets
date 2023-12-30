@@ -81,7 +81,21 @@ function createFlakeTestTableData(testData, failedTests) {
 
         table.push({testCaseName, runs});
     }
+
+    // remove all tests that have runs that end with n/a
+    var removeTests = [];
+    for(var i = 0; i < table.length; i++) {
+        if(table[i].runs[table[i].runs.length-1] == 'n/a') {
+            removeTests.push(i);
+        }
+    }
+    for(var i = removeTests.length-1; i >= 0; i--) {
+        table.splice(removeTests[i], 1);
+    } 
+
+    console.log("table start");
     console.log(table);
+    console.log("table end");
     
     return table;
 }
