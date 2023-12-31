@@ -43,7 +43,42 @@ VSS.require([
                         .then(buildData => fetchTestData(token, projectName, organization, buildData))
                         .then(testData => getFailedTests(token, projectName, organization, testData).then(failedTests => ({ testData, failedTests })))
                         .then(({ testData, failedTests }) => {
-                            var flakyTests = createFlakeTestTableData(testData,failedTests);
+                            var testTableData = createFlakeTestTableData(testData,failedTests);
+                            var tableBody = $('#table-body');
+
+                            testTableData.forEach(entry => {
+                                var images = entry.runs.map(run => {
+                                    var imgSrc;
+                                    switch(run) {
+                                        case 'n/a':
+                                            imgSrc = 'img/status/empty.png';
+                                            break;
+                                        case 'NotExecuted':
+                                            imgSrc = 'img/status/skipped.png';
+                                            break;
+                                        case 'Passed':
+                                            imgSrc = 'img/status/success.png';
+                                            break;
+                                        case 'Failed':
+                                            imgSrc = 'img/status/failed.png';
+                                            break;
+                                        default:
+                                            imgSrc = 'img/status/warning.png';
+                                    }
+                                    return `<img src="${imgSrc}" />`;
+                                }).join('');
+                                var row = `<tr>
+                                    <td><div style="display: flex; float: right;">${images}</div></td>
+                                    <td></td>
+                                    <td>${entry.testCaseName}</td>
+                                </tr>`;
+                                tableBody.append(row);
+                            });
+
+
+                            console.log("table start");
+                            console.log(testTableData);
+                            console.log("table end");
                             // var $container = $('#Chart-Container');
                             // var chartOptions = getChartOptions(testData, widgetSettings.size.rowSpan);
                             // chartService.createChart($container, chartOptions);
@@ -92,10 +127,6 @@ function createFlakeTestTableData(testData, failedTests) {
     for(var i = removeTests.length-1; i >= 0; i--) {
         table.splice(removeTests[i], 1);
     } 
-
-    console.log("table start");
-    console.log(table);
-    console.log("table end");
     
     return table;
 }
