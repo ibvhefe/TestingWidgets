@@ -30,7 +30,6 @@
             padding: 0;
             border: 0;
             background-color: var(--background-color, rgba(255, 255, 255, 1));
-            overflow: hidden;
         }
 
         th {
@@ -56,11 +55,12 @@
             margin: 0;
             outline: none;
             padding: 0;
-            padding-bottom: 10px;
+            padding-bottom: 12px;
             padding-top: 5px;
             position: relative;
             text-align: left;
             width: fit-content;
+            vertical-align: middle;
         }
 
         thead {
@@ -95,7 +95,7 @@
         }
 
         #Flaky-Table {
-            max-width: 460px;
+            table-layout: fixed;
         }
 
         #Flaky-Table td, #Flaky-Table th {
@@ -113,8 +113,8 @@
             <br />
             <table id="Flaky-Table">
                 <colgroup>
-                    <col style="width: auto;">
-                    <col style="width: 20px;">
+                    <col id="history-column">
+                    <col style="width: 10px;">
                     <col style="width: 100%;">
                 </colgroup>
                 <thead>

@@ -44,7 +44,7 @@ VSS.require([
                         .then(testData => getFailedTests(token, projectName, organization, testData).then(failedTests => ({ testData, failedTests })))
                         .then(({ testData, failedTests }) => {
                             var testTableData = createFlakeTestTableData(testData,failedTests);
-                            fillTableUi(testTableData);
+                            fillTableUi(testTableData, settings.days);
                             return WidgetHelpers.WidgetStatusHelper.Success();
                         });                            
                     });
@@ -55,7 +55,10 @@ VSS.require([
     }
 );
 
-function fillTableUi(testTableData) {
+function fillTableUi(testTableData, days) {
+    var historyColumn = $('#history-column');
+    historyColumn.css('width', days * 18 + 18 + 'px');
+
     var tableBody = $('#table-body');
 
     testTableData.forEach(entry => {
@@ -80,9 +83,9 @@ function fillTableUi(testTableData) {
             return `<a href="${run.url}" target="_blank"><img src="${imgSrc}" /></a>`;
         }).join('');
         var row = `<tr>
-            <td><div style="display: flex; float: right;">${images}</div></td>
+            <td><div style="display: flex; float: right; height:17px;">${images}</div></td>
             <td></td>
-            <td style="width:100px">${entry.testCaseName}</td>
+            <td>${entry.testCaseName}</td>
         </tr>`;
         tableBody.append(row);
     });
@@ -189,7 +192,7 @@ function getFailedTests(token, projectName,  organization, testData) {
             runId = test.testRun.id;
             resultId = test.id;
             referenceId = test.testCaseReferenceId;
-            if(test.outcome == 'Failed' && test.testCaseReferenceId != null && failedTestIds.includes(referenceId) == false) {
+            if(test.outcome != 'Passed' && test.testCaseReferenceId != null && failedTestIds.includes(referenceId) == false) {
                 failedTests.push({referenceId,runId,resultId});
                 failedTestIds.push(referenceId);
             }

@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "testing-widgets",
-    "version": "0.0.407",
+    "version": "1.0.2",
     "name": "Testing widgets",
     "description": "A collection of widgets for test visualization",
     "publisher": "sebastianmechelke",
@@ -176,5 +176,9 @@
         "vso.code",
         "vso.identity",
         "vso.test"
+    ],
+    "galleryFlags": [
+        "Preview",
+        "Public"
     ]
 }
