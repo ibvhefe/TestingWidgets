@@ -44,44 +44,7 @@ VSS.require([
                         .then(testData => getFailedTests(token, projectName, organization, testData).then(failedTests => ({ testData, failedTests })))
                         .then(({ testData, failedTests }) => {
                             var testTableData = createFlakeTestTableData(testData,failedTests);
-                            var tableBody = $('#table-body');
-
-                            testTableData.forEach(entry => {
-                                var images = entry.runs.map(run => {
-                                    var imgSrc;
-                                    switch(run) {
-                                        case 'n/a':
-                                            imgSrc = 'img/status/empty.png';
-                                            break;
-                                        case 'NotExecuted':
-                                            imgSrc = 'img/status/skipped.png';
-                                            break;
-                                        case 'Passed':
-                                            imgSrc = 'img/status/success.png';
-                                            break;
-                                        case 'Failed':
-                                            imgSrc = 'img/status/failed.png';
-                                            break;
-                                        default:
-                                            imgSrc = 'img/status/warning.png';
-                                    }
-                                    return `<img src="${imgSrc}" />`;
-                                }).join('');
-                                var row = `<tr>
-                                    <td><div style="display: flex; float: right;">${images}</div></td>
-                                    <td></td>
-                                    <td>${entry.testCaseName}</td>
-                                </tr>`;
-                                tableBody.append(row);
-                            });
-
-
-                            console.log("table start");
-                            console.log(testTableData);
-                            console.log("table end");
-                            // var $container = $('#Chart-Container');
-                            // var chartOptions = getChartOptions(testData, widgetSettings.size.rowSpan);
-                            // chartService.createChart($container, chartOptions);
+                            fillTableUi(testTableData);
                             return WidgetHelpers.WidgetStatusHelper.Success();
                         });                            
                     });
@@ -92,7 +55,41 @@ VSS.require([
     }
 );
 
+function fillTableUi(testTableData) {
+    var tableBody = $('#table-body');
+
+    testTableData.forEach(entry => {
+        var images = entry.runs.map(run => {
+            var imgSrc;
+            switch(run.outcome) {
+                case 'n/a':
+                    imgSrc = 'img/status/empty.png';
+                    break;
+                case 'NotExecuted':
+                    imgSrc = 'img/status/skipped.png';
+                    break;
+                case 'Passed':
+                    imgSrc = 'img/status/success.png';
+                    break;
+                case 'Failed':
+                    imgSrc = 'img/status/failed.png';
+                    break;
+                default:
+                    imgSrc = 'img/status/warning.png';
+            }
+            return `<a href="${run.url}" target="_blank"><img src="${imgSrc}" /></a>`;
+        }).join('');
+        var row = `<tr>
+            <td><div style="display: flex; float: right;">${images}</div></td>
+            <td></td>
+            <td style="width:100px">${entry.testCaseName}</td>
+        </tr>`;
+        tableBody.append(row);
+    });
+}
+
 function createFlakeTestTableData(testData, failedTests) {
+    console.log(testData);
     var table = [];
     for(var f = 0; f < failedTests.length; f++) {
         var runs = [];
@@ -101,33 +98,37 @@ function createFlakeTestTableData(testData, failedTests) {
         for(var i = testData.length-1; i >= 0 ; i--) {
             var testSet = testData[i];
             var testExists = false;
+            var url = testData[i].url;
             for(var j = 0; j < testSet.data.resultsForGroup[0].results.length; j++) {
                 var test = testSet.data.resultsForGroup[0].results[j];
                 if(test.testCaseReferenceId == testCaseReferenceId) {
-                    runs.push(test.outcome);
+                    var outcome = test.outcome;
+                    runs.push({outcome,url});
                     testExists = true;
                     break;
                 }
             }
             if(testExists == false) {
-                runs.push('n/a');
+                var outcome = 'n/a';
+                runs.push({outcome,url});
             }
         }
-
+        
         table.push({testCaseName, runs});
     }
 
     // remove all tests that have runs that end with n/a
     var removeTests = [];
     for(var i = 0; i < table.length; i++) {
-        if(table[i].runs[table[i].runs.length-1] == 'n/a') {
+        if(table[i].runs[table[i].runs.length-1].outcome == 'n/a') {
             removeTests.push(i);
         }
     }
     for(var i = removeTests.length-1; i >= 0; i--) {
         table.splice(removeTests[i], 1);
     } 
-    
+
+    table.sort((a, b) => a.testCaseName.localeCompare(b.testCaseName));
     return table;
 }
 
