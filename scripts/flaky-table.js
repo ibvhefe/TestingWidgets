@@ -30,12 +30,12 @@ VSS.require([
                         var projectName = VSS.getWebContext().project.name;
                         var definitionId = settings.pipeline;
                         var organization = VSS.getWebContext().account.name;
-                        fetchBuildData(token, projectName, definitionId, settings.branch, organization, settings.reason, settings.days)
+                        return fetchBuildData(token, projectName, definitionId, settings.branch, organization, settings.reason, settings.days)
                         .then(data => {
                             if(data.count < 1) {
                                 var $container = $('#Chart-Container');
                                 $container.text('At least 1 build is required to show a chart.');
-                                return WidgetHelpers.WidgetStatusHelper.Success();
+                                return [];
                             }
                             var buildData = data.value.map(build => ({ id: build.id, finishTime: build.finishTime }));
                             return buildData;
@@ -102,8 +102,9 @@ function createFlakeTestTableData(testData, failedTests) {
             var testSet = testData[i];
             var testExists = false;
             var url = testData[i].url;
-            for(var j = 0; j < testSet.data.resultsForGroup[0].results.length; j++) {
-                var test = testSet.data.resultsForGroup[0].results[j];
+            var results = getTestResults(testSet);
+            for(var j = 0; j < results.length; j++) {
+                var test = results[j];
                 if(test.testCaseReferenceId == testCaseReferenceId) {
                     var outcome = test.outcome;
                     runs.push({outcome,url});
@@ -162,7 +163,7 @@ function fetchBuildData(token, projectName, definitionId, branchFilter, organiza
             'Authorization': 'Bearer ' + token,
             'Content-Type': 'application/json'
         }
-    }).then(response => response.json());
+    }).then(parseResponse);
 }
 
 function fetchTestData(token, projectName,  organization, buildData) {    
@@ -175,7 +176,7 @@ function fetchTestData(token, projectName,  organization, buildData) {
                 'Authorization': 'Bearer ' + token,
                 'Content-Type': 'application/json'
             }
-        }).then(response => response.json())
+        }).then(parseResponse)
         .then(data => ({data, finishTime: build.finishTime, url: `https://dev.azure.com/${organization}/${projectName}/_build/results?buildId=${build.id}&view=results`}));
 
         promises.push(promise);
@@ -188,10 +189,10 @@ function getFailedTests(token, projectName,  organization, testData) {
     var failedTests = [];
     var failedTestIds = [];
     testData.forEach(testRun => {
-        testRun.data.resultsForGroup[0].results.forEach(test => {
-            runId = test.testRun.id;
-            resultId = test.id;
-            referenceId = test.testCaseReferenceId;
+        getTestResults(testRun).forEach(test => {
+            var runId = test.testRun.id;
+            var resultId = test.id;
+            var referenceId = test.testCaseReferenceId;
             if(test.outcome != 'Passed' && test.testCaseReferenceId != null && failedTestIds.includes(referenceId) == false) {
                 failedTests.push({referenceId,runId,resultId});
                 failedTestIds.push(referenceId);
@@ -208,9 +209,24 @@ function getFailedTests(token, projectName,  organization, testData) {
                 'Authorization': 'Bearer ' + token,
                 'Content-Type': 'application/json'
             }
-        }).then(response => response.json());
+        }).then(parseResponse);
         promises.push(promise);
     });
 
     return Promise.all(promises);
+}
+
+function getTestResults(testRun) {
+    var groups = testRun && testRun.data && testRun.data.resultsForGroup;
+    if(!Array.isArray(groups) || groups.length === 0 || !Array.isArray(groups[0].results)) {
+        return [];
+    }
+    return groups[0].results;
+}
+
+function parseResponse(response) {
+    if(!response.ok) {
+        throw new Error(`Azure DevOps request failed with status ${response.status}.`);
+    }
+    return response.json();
 }
