@@ -100,22 +100,20 @@ function createFlakeTestTableData(testData, failedTests) {
         var testCaseName = failedTests[f].automatedTestName;
         for(var i = testData.length-1; i >= 0 ; i--) {
             var testSet = testData[i];
-            var testExists = false;
             var url = testData[i].url;
-            var results = getTestResults(testSet);
-            for(var j = 0; j < results.length; j++) {
-                var test = results[j];
-                if(test.testCaseReferenceId == testCaseReferenceId) {
-                    var outcome = test.outcome;
-                    runs.push({outcome,url});
-                    testExists = true;
-                    break;
-                }
+            var outcomes = getTestResults(testSet)
+                .filter(test => test.testCaseReferenceId == testCaseReferenceId)
+                .map(test => test.outcome);
+            var outcome;
+            if(outcomes.length == 0) {
+                outcome = 'n/a';
+            } else if(outcomes.includes('Passed') && outcomes.includes('Failed')) {
+                // failed in this build but passed on a rerun; rendered with the warning icon
+                outcome = 'PassedOnRerun';
+            } else {
+                outcome = outcomes[0];
             }
-            if(testExists == false) {
-                var outcome = 'n/a';
-                runs.push({outcome,url});
-            }
+            runs.push({outcome,url});
         }
         
         table.push({testCaseName, runs});
