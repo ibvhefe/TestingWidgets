@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "testing-widgets",
-    "version": "1.1.4",
+    "version": "1.1.5",
     "name": "Testing widgets",
     "description": "A collection of widgets for test visualization",
     "publisher": "sebastianmechelke",
@@ -146,6 +146,78 @@
                     },
                     {
                         "rowSpan": 4,
+                        "columnSpan": 4
+                    },
+                    {
+                        "rowSpan": 5,
+                        "columnSpan": 2
+                    },
+                    {
+                        "rowSpan": 5,
+                        "columnSpan": 3
+                    },
+                    {
+                        "rowSpan": 5,
+                        "columnSpan": 4
+                    },
+                    {
+                        "rowSpan": 6,
+                        "columnSpan": 2
+                    },
+                    {
+                        "rowSpan": 6,
+                        "columnSpan": 3
+                    },
+                    {
+                        "rowSpan": 6,
+                        "columnSpan": 4
+                    },
+                    {
+                        "rowSpan": 7,
+                        "columnSpan": 2
+                    },
+                    {
+                        "rowSpan": 7,
+                        "columnSpan": 3
+                    },
+                    {
+                        "rowSpan": 7,
+                        "columnSpan": 4
+                    },
+                    {
+                        "rowSpan": 8,
+                        "columnSpan": 2
+                    },
+                    {
+                        "rowSpan": 8,
+                        "columnSpan": 3
+                    },
+                    {
+                        "rowSpan": 8,
+                        "columnSpan": 4
+                    },
+                    {
+                        "rowSpan": 9,
+                        "columnSpan": 2
+                    },
+                    {
+                        "rowSpan": 9,
+                        "columnSpan": 3
+                    },
+                    {
+                        "rowSpan": 9,
+                        "columnSpan": 4
+                    },
+                    {
+                        "rowSpan": 10,
+                        "columnSpan": 2
+                    },
+                    {
+                        "rowSpan": 10,
+                        "columnSpan": 3
+                    },
+                    {
+                        "rowSpan": 10,
                         "columnSpan": 4
                     }
                 ],

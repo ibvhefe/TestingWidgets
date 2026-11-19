@@ -137,10 +137,8 @@ function createFlakeTestTableData(testData, failedTests) {
 
 function showConfigureWidget(widgetSettings, dashboardServices, widgetHelpers) {
     $('#Configure-Widget').css('display', 'block');
-    var height = 70;
-    if(widgetSettings.size.rowSpan == 3) {
-        height = 150;
-    }
+    // Roughly center the text vertically: 70px for rowSpan 2, +80px per additional row.
+    var height = 70 + Math.max(0, widgetSettings.size.rowSpan - 2) * 80;
     $('#Configure-Widget-Text').css('margin-top', height + 'px');
 
     dashboardServices.WidgetHostService.getService().then((DashboardServiceHost) => {
